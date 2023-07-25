@@ -20,7 +20,7 @@ on:
 
    UPLOAD_FIRMWARE: true 
 
-   UPLOAD_RELEASE: true 
+   UPLOAD_RELEASE: false
 
    TZ: Asia/Shanghai 
 
