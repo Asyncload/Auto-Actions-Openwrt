@@ -1,7 +1,6 @@
 name: Redmi-AX6000-hanwckf 
 
- on:
-
+on:
   workflow_dispatch: 
 
      inputs: 
