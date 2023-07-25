@@ -10,19 +10,13 @@
  # 
  name: Redmi-AX6000-OpenWrt 
   
- on: 
+ on:
    repository_dispatch: 
    workflow_dispatch: 
-     inputs: 
-       ssh: 
-         description: 'SSH connection to Actions' 
-         required: false 
-         default: 'false' 
-   schedule: 
-     - cron: "0 0 ? * FRI" 
+  
   
  env: 
-   REPO_URL: https://github.com/openwrt/openwrt 
+   REPO_URL: https://github.com/coolsnowwolf/lede
    REPO_BRANCH: master 
    FEEDS_CONF: feeds.conf.default 
    CONFIG_FILE: .config 
@@ -32,7 +26,7 @@
    UPLOAD_RELEASE: false
    TZ: Asia/Shanghai 
    ###############改名字############## 
-   OPENWRT_NAME: openwrt 
+   OPENWRT_NAME: Openwrt_Redmi_Ax6000
   
  jobs: 
    build: 
@@ -42,54 +36,60 @@
      - name: 检查项目分支 
        uses: actions/checkout@main 
   
-     - name: 初始化编译环境 
-       env: 
-         DEBIAN_FRONTEND: noninteractive 
-       run: | 
-         sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc 
-         sudo -E apt-get -qq update 
-         sudo -E apt-get -qq install $(curl -fsSL https://raw.githubusercontent.com/yishangfei/Actions-OpenWrt/main/.github/workflows/depends-ubuntu) 
-         sudo -E apt-get -qq autoremove --purge 
-         sudo -E apt-get -qq clean 
-         sudo timedatectl set-timezone "$TZ" 
-         
-         
+     - name: 初始化编译环境
+       env:
+        DEBIAN_FRONTEND: noninteractive
+       run: |
+        sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
+        sudo apt update -y
+        sudo apt full-upgrade -y
+        sudo apt install -y ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential \
+        bzip2 ccache cmake cpio curl device-tree-compiler fastjar flex gawk gettext gcc-multilib g++-multilib \
+        git gperf haveged help2man intltool libc6-dev-i386 libelf-dev libglib2.0-dev libgmp3-dev libltdl-dev \
+        libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev libreadline-dev libssl-dev libtool lrzsz \
+        mkisofs msmtp nano ninja-build p7zip p7zip-full patch pkgconf python2.7 python3 python3-pyelftools \
+        libpython3-dev qemu-utils rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip \
+        vim wget xmlto xxd zlib1g-dev
+        sudo -E apt-get -qq autoremove --purge
+        sudo -E apt-get -qq clean
+        sudo timedatectl set-timezone "$TZ"
+        sudo mkdir -p /workdir
+         sudo chown $USER:$GROUPS /workdir
+        # 清理多余文件，腾出磁盘空间
+        docker rmi $(docker images -q)
+        # sudo -E apt-get remove -y --purge azure-cli ghc zulu* llvm* firefox google* dotnet* powershell mysql* php* android*
+        # sudo rm -rf /etc/mysql /etc/php /swapfile
+           
           
      - name: 下载固件源码 
-       
-       run: | 
-         df -hT $PWD 
-         git clone $REPO_URL -b $REPO_BRANCH openwrt 
-         ln -sf /openwrt $GITHUB_WORKSPACE/openwrt 
+       working-directory: /workdir
+       run: |
+        df -hT $PWD
+        git clone $REPO_URL -b $REPO_BRANCH openwrt
+        ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
            
-     - name: 加载feeds.conf.default & DIY_P1_SH 
-       run: | 
-         [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default 
-         chmod +x $DIY_P1_SH 
-         cd openwrt 
-         $GITHUB_WORKSPACE/$DIY_P1_SH 
-          
-     - name: 更新 & 安装 feeds 
-       run: | 
-         cd openwrt 
-         ./scripts/feeds update -a 
-         ./scripts/feeds install -a 
+     - name: 加载自定义feeds
+       run: |
+        [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
+        chmod +x $DIY_P1_SH
+        cd openwrt
+        $GITHUB_WORKSPACE/$DIY_P1_SH
+     - name: 更新Feeds并安装软件源
+       run: |
+        cd openwrt 
+        ./scripts/feeds update -a && ./scripts/feeds install -a
+        ./scripts/feeds update -a && ./scripts/feeds install -a
     
-     - name: 加载config & DIY_P2_SH 
-       run: | 
-         [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config 
-         chmod +x $DIY_P2_SH 
-         cd openwrt 
-         $GITHUB_WORKSPACE/$DIY_P2_SH 
+     - name: 加载自定义配置
+       run: |
+        [ -e files ] && mv files openwrt/files
+        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
+        chmod +x $DIY_P2_SH
+        cd openwrt
+        $GITHUB_WORKSPACE/$DIY_P2_SH
           
-     - name: SSH链接管理 
-       uses: P3TERX/ssh2actions@v1.0.0 
-       if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh') 
-       env: 
-         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }} 
-         TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }} 
   
-     - name: 下载安装包 
+     - name: 下载安装包(dl库) 
        id: package 
        run: | 
          cd openwrt 
@@ -109,11 +109,7 @@
          grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*TARGET_.*_(.*)_DEVICE_.*=y/\1/' > TARGET_NAME 
          [ -s TARGET_NAME ] && echo "TARGET_NAME=$(cat TARGET_NAME)" >> $GITHUB_ENV 
          echo "FILE_DATE=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_ENV 
-         echo "status=success" >> $GITHUB_OUTPUT 
-          
-     - name: 查看磁盘使用情况 
-       if: (!cancelled()) 
-       run: df -hT 
+         echo "status=success" >> $GITHUB_OUTPUT
   
      - name: 整理文件并重命名 
        id: organize 
@@ -128,7 +124,7 @@
         
      - name: 上传固件到github 
        uses: actions/upload-artifact@main 
-       if: steps.organize.outputs.status == 'success' && !cancelled() 
+       #if: steps.organize.outputs.status == 'success' && !cancelled() 
        with: 
          name: ${{ env.FILE_DATE }}-${{ env.OPENWRT_NAME }}-${{ env.DEVICE_NAME }} 
          path: ${{ env.FIRMWARE }} 
