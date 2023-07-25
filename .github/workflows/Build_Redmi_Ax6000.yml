@@ -27,7 +27,6 @@
    FEEDS_CONF: feeds.conf.default 
    CONFIG_FILE: .config 
    DIY_P1_SH: diy-part1.sh 
-   DIY_
    SSH_ACTIONS: false 
    UPLOAD_FIRMWARE: true 
    UPLOAD_RELEASE: false
