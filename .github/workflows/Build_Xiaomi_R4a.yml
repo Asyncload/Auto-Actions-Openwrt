@@ -1,9 +1,3 @@
-#=================================================
-# Description: Build OpenWrt using GitHub Actions
-# Lisence: MIT
-# Author: eSirPlayground
-# Youtube Channel: https://goo.gl/fvkdwm 
-#=================================================
 
 name: Build_Xiaomi_R4a
 
@@ -11,16 +5,25 @@ name: Build_Xiaomi_R4a
 on: 
   repository_dispatch:
   workflow_dispatch:
-
+  
+env:
+  REPO_URL: https://github.com/coolsnowwolf/lede
+  REPO_BRANCH: master    
+  FEEDS_CONF: feeds.conf.default
+  DIY_P1_SH: diy-part1.sh
+  DIY_P2_SH: diy-part2.sh
+  UPLOAD_FIRMWARE: true
+  TZ: Asia/Shanghai
+  
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@master
+    - name: 检出仓库数据
+      uses: actions/checkout@main
 
-    - name: Initialization environment
+    - name: 初始化编译环境
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
@@ -44,19 +47,24 @@ jobs:
           openjdk* \
           mysql* \
           php*
+        sudo timedatectl set-timezone "$TZ"
         sudo -E apt-get update
         sudo -E apt-get -y install ack antlr3 aria2 asciidoc autoconf automake autopoint binutils bison build-essential bzip2 ccache cmake cpio curl device-tree-compiler fastjar flex gawk gettext gcc-multilib g++-multilib git gperf haveged help2man intltool libc6-dev-i386 libelf-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev libreadline-dev libssl-dev libtool lrzsz mkisofs msmtp nano ninja-build p7zip p7zip-full patch pkgconf python2.7 python3 python3-pip libpython3-dev qemu-utils rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev
         sudo -E apt-get -y autoremove --purge
         sudo -E apt-get clean
-    - name: Clone source code
-      env: 
-        REPO_URL: https://github.com/coolsnowwolf/lede
-        REPO_BRANCH: master
+        
+    - name: 拉取OpenWrt仓库
       run: |
-        git clone --depth 1 $REPO_URL -b $REPO_BRANCH openwrt
+        df -hT $PWD
+        git clone $REPO_URL -b $REPO_BRANCH openwrt
+        ln -sf /openwrt $GITHUB_WORKSPACE/openwrt
+    - name: 加载自定义源 feeds
+      run: |
+        [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
+        chmod +x $DIY_P1_SH
         cd openwrt
-        #echo "src-git ssrp https://github.com/fw876/helloworld.git" >> ./feeds.conf.default
-    - name: Update & Install feeds
+        $GITHUB_WORKSPACE/$DIY_P1_SH
+    - name: 更新Feeds并安装软件源
       working-directory: ./openwrt
       run: |
         ./scripts/feeds update -a
@@ -68,27 +76,34 @@ jobs:
     #  run: |
     #    git clone -b 18.06 https://github.com/jerrykuku/luci-theme-argon.git package/luci-theme-argon-jerrykuku   
   
-    - name: Configuration Customization - Build_Xiaomi_R4a
+    - name: 加载自定义配置 - Build_Xiaomi_R4a
       env:
         CONFIG_FILE: 'Xiaomi_R4a.config'
       run: |
         [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
-        chmod +x ./customize.sh && ./customize.sh
-        cd openwrt && make defconfig
+        chmod +x $DIY_P2_SH
+        cd openwrt
+        $GITHUB_WORKSPACE/$DIY_P2_SH
         
-    - name: Download package
+    - name: 下载编译所需文件(dl库)
       working-directory: ./openwrt
       run: |
         make download -j$(nproc)
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
-    - name: Build firmware
+    - name: 编译固件
       working-directory: ./openwrt
       run: |
         echo -e "$(nproc) thread build."
         make -j$(nproc) V=s
-    - name : Upload artifact
+    - name : 上传固件
       uses: actions/upload-artifact@master
       with:
-        name: OpenWrt
-        path: openwrt/bin
+        name: OpenWrt_bin${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+        path: openwrt/bin 
+        
+    - name: 清理ActionsRuns旧数据
+      uses: FunctionXJB/delete-workflow-runs@main
+      with:
+        retain_days: 10
+        keep_minimum_runs: 3
