@@ -1,5 +1,5 @@
 #!/bin/bash
-#路由器软件源 软件依赖写在这个文件里面
+# 路由器软件源 软件依赖写在这个文件里面
 # Copyright (c) 2019-2020 P3TERX <https://p3terx.com>
 #
 # This is free software, licensed under the MIT License.
@@ -16,4 +16,5 @@
 # Add a feed source
 #sed -i '$a src-git lienol https://github.com/Lienol/openwrt-package' feeds.conf.default
 #git clone https://github.com/MrH723/openwrt-packages.git package/openwrt-packages
-sed -i '$a src-git MrH723 https://github.com/MrH723/openwrt-packages' feeds.conf.default
+#sed -i '$a src-git MrH723 https://github.com/MrH723/openwrt-packages' feeds.conf.default
+echo 'src-git wiwiz https://github.com/wiwizcom/WiFiPortal' >>feeds.conf.default
