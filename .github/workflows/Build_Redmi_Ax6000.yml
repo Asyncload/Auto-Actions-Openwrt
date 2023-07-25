@@ -25,12 +25,12 @@
    REPO_URL: https://github.com/openwrt/openwrt 
    REPO_BRANCH: master 
    FEEDS_CONF: feeds.conf.default 
-   CONFIG_FILE: OpenWrt/.config 
-   DIY_P1_SH: OpenWrt/diy-part1.sh 
-   DIY_P2_SH: OpenWrt/diy-part2.sh 
+   CONFIG_FILE: .config 
+   DIY_P1_SH: diy-part1.sh 
+   DIY_
    SSH_ACTIONS: false 
    UPLOAD_FIRMWARE: true 
-   UPLOAD_RELEASE: true 
+   UPLOAD_RELEASE: false
    TZ: Asia/Shanghai 
    ###############改名字############## 
    OPENWRT_NAME: openwrt 
@@ -53,15 +53,15 @@
          sudo -E apt-get -qq autoremove --purge 
          sudo -E apt-get -qq clean 
          sudo timedatectl set-timezone "$TZ" 
-         sudo mkdir -p /workdir 
-         sudo chown $USER:$GROUPS /workdir 
+         
+         
           
      - name: 下载固件源码 
-       working-directory: /workdir 
+       
        run: | 
          df -hT $PWD 
          git clone $REPO_URL -b $REPO_BRANCH openwrt 
-         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt 
+         ln -sf /openwrt $GITHUB_WORKSPACE/openwrt 
            
      - name: 加载feeds.conf.default & DIY_P1_SH 
        run: | 
