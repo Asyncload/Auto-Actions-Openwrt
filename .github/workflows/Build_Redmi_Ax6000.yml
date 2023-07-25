@@ -19,7 +19,7 @@
    REPO_URL: https://github.com/coolsnowwolf/lede
    REPO_BRANCH: master 
    FEEDS_CONF: feeds.conf.default 
-   CONFIG_FILE: .config 
+   CONFIG_FILE: Redmi_Ax6000.config 
    DIY_P1_SH: redmi-ax6000/1.sh 
    DIY_P2_SH: redmi-ax6000/2.sh 
    SSH_ACTIONS: false 
@@ -55,7 +55,7 @@
         sudo -E apt-get -qq clean
         sudo timedatectl set-timezone "$TZ"
         sudo mkdir -p /workdir
-         sudo chown $USER:$GROUPS /workdir
+        sudo chown $USER:$GROUPS /workdir
         # 清理多余文件，腾出磁盘空间
         docker rmi $(docker images -q)
         # sudo -E apt-get remove -y --purge azure-cli ghc zulu* llvm* firefox google* dotnet* powershell mysql* php* android*
