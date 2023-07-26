@@ -91,7 +91,7 @@
           
   
      - name: 下载安装包(dl库) 
-       id: package 
+       working-directory: ./openwrt
        run: | 
          cd openwrt 
          make defconfig 
