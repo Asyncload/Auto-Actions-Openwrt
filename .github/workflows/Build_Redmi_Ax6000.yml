@@ -10,8 +10,8 @@ env:
   REPO_BRANCH: master    
   FEEDS_CONF: feeds.conf.default
   CONFIG_FILE: .config
-  DIY_P1_SH: /redmi-ax6000/1.sh
-  DIY_P2_SH: /redmi-ax6000/2.sh
+  DIY_P1_SH: ./redmi-ax6000/1.sh
+  DIY_P2_SH: ./redmi-ax6000/2.sh
   UPLOAD_FIRMWARE: true
   UPLOAD_RELEASE: false
   TZ: Asia/Shanghai
@@ -81,7 +81,7 @@ jobs:
       run: |
         cd openwrt
         make defconfig
-        make download -j8
+        make download -j10
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
 
