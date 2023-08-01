@@ -20,7 +20,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@master
 
-    - name: Initialization environment
+    - name: 编译环境
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
@@ -50,12 +50,12 @@ jobs:
         sudo -E apt-get clean
     - name: 拉取源码
       env: 
-        REPO_URL: https://github.com/coolsnowwolf/lede
+        REPO_URL: https://github.com/x-wrt/x-wrt
         REPO_BRANCH: master
       run: |
         git clone --depth 1 $REPO_URL -b $REPO_BRANCH openwrt
         cd openwrt
-        #echo "src-git ssrp https://github.com/fw876/helloworld.git" >> ./feeds.conf.default
+      
     - name: 更新Or安装feeds
       working-directory: ./openwrt
       run: |
