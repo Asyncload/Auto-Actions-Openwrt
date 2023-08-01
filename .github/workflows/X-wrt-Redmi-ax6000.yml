@@ -70,7 +70,7 @@ jobs:
   
     - name: 加载配置
       env:
-        CONFIG_FILE: 'Redmi_Ax6000.config'
+        CONFIG_FILE: 'X-wrt-Ax6000.config'
       run: |
         [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
         chmod +x redmi-ax6000/2.sh && redmi-ax6000/2.sh
